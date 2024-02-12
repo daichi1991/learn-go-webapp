@@ -1,10 +1,8 @@
 package main
 
 import (
-	"io"
 	"log"
 	"net/http"
-	"fmt"
 	"github.com/daichi1991/learn-go-webapp/handlers"
 )
 
