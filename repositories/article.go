@@ -15,15 +15,15 @@ func InsertArticle(db *sql.DB, article models.Article) (models.Article, error) {
 		(?, ?, ?, 0, now());
 	`
 
-	var newArtice models.Article
-	newArtice.Title, newArtice.Contents, newArtice.UserName = article.Title, article.Contents, article.Username
+	var newArticle models.Article
+	newArticle.Title, newArticle.Contents, newArticle.UserName = article.Title, article.Contents, article.UserName
 
-	result, err := db.Exec(sqlStr, article.title, article.contents, article.username)
+	result, err := db.Exec(sqlStr, article.Title, article.Contents, article.UserName)
 	if err != nil {
 		return models.Article{}, err
 	}
 	id, _ := result.LastInsertId()
-	newArtice.ID = int(id)
+	newArticle.ID = int(id)
 
 	return newArticle, nil
 }
@@ -34,17 +34,18 @@ func SelectArticleList(db *sql.DB, page int) ([]models.Article, error) {
 		from articles
 		limit ? offset ?;
 	`
-	rows, err := db.Query(sqlStr, 5, articleNumPerPage, ((page - 1) * articleNumPerPage))
+
+	rows, err := db.Query(sqlStr, articleNumPerPage, ((page - 1) * articleNumPerPage))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	articleArray := make([]modles.Article, 0)
+	articleArray := make([]models.Article, 0)
 	for rows.Next() {
 		var article models.Article
 		rows.Scan(&article.ID, &article.Title, &article.Contents, &article.UserName, &article.NiceNum)
-		
+
 		articleArray = append(articleArray, article)
 	}
 
@@ -63,13 +64,13 @@ func SelectArticleDetail(db *sql.DB, articleID int) (models.Article, error) {
 	}
 	var article models.Article
 	var createdTime sql.NullTime
-	err = row.Scan(&article.ID, &article.Title, &article.Contents, &article.UserName, &article.NiceNum, &article.createdTime  )
+	err := row.Scan(&article.ID, &article.Title, &article.Contents, &article.UserName, &article.NiceNum, &createdTime  )
 	if err != nil {
 		return models.Article{}, err
 	}
 
 	if createdTime.Valid {
-		article.CreatedAt = createdTime
+		article.CreatedAt = createdTime.Time
 	}
 
 	return article, nil
