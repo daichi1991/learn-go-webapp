@@ -1,6 +1,7 @@
 package services
 
 import (
+	"github.com/daichi1991/learn-go-webapp/apperrors"
 	"github.com/daichi1991/learn-go-webapp/models"
 	"github.com/daichi1991/learn-go-webapp/repositories"
 )
@@ -10,6 +11,7 @@ import (
 func (s *MyAppService) PostArticleService(article models.Article) (models.Article, error) {
 	newArticle, err := repositories.InsertArticle(s.db, article)
 	if err != nil {
+		err = apperrors.InsertDetailFailed.Wrap(err, "failed to record data")
 		return models.Article{}, err
 	}
 	return newArticle, nil
@@ -31,10 +33,16 @@ func (s *MyAppService) GetArticleListService(page int) ([]models.Article, error)
 func (s *MyAppService) GetArticleService(articleID int) (models.Article, error) {
 	article, err := repositories.SelectArticleDetail(s.db, articleID)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = apperrors.NAData.Wrap(err, "no data")
+			return models.Article{}, err
+		}
+		err = apperrors.GetDataFailed.Wrap(err, "failed to get data")
 		return models.Article{}, err
 	}
 	commentList, err := repositories.SelectCommentList(s.db, articleID)
 	if err != nil {
+		err = apperrors.GetDataFailed.Wrap(err, "failed to get data")
 		return models.Article{}, err
 	}
 

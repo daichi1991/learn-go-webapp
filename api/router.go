@@ -10,7 +10,7 @@ import (
 
 func NewRouter(db *sql.DB) *mux.Router {
 	ser := services.NewMyAppService(db)
-	aCon := controllers.NewAeticleController(ser)
+	aCon := controllers.NewArticleController(ser)
 	cCon := controllers.NewCommentController(ser)
 
 	r := mux.NewRouter()

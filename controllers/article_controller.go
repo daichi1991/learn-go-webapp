@@ -15,7 +15,7 @@ type ArticleController struct {
 	service services.ArticleServicer
 }
 
-func NewAeticleController(s services.ArticleServicer) *ArticleController {
+func NewArticleController(s services.ArticleServicer) *ArticleController {
 	return &ArticleController{service: s}
 }
 
