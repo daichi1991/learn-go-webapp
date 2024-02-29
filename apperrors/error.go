@@ -15,6 +15,9 @@ const (
 	GetDataFailed 		ErrCode = "S002"
 	NAData 						ErrCode = "S003"
 	NoTargetData 			ErrCode = "S004"
+
+	ReqBodyDecodeFailed ErrCode = "R001"
+	BadParam		 				ErrCode = "R002"
 )
 
 func (myErr *MyAppError) Error() string {
