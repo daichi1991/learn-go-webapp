@@ -4,6 +4,8 @@ import (
 	"github.com/daichi1991/learn-go-webapp/apperrors"
 	"github.com/daichi1991/learn-go-webapp/models"
 	"github.com/daichi1991/learn-go-webapp/repositories"
+	"database/sql"
+	"errors"
 )
 
 // PostArticleHandlerで使うことを想定したサービス
@@ -11,7 +13,7 @@ import (
 func (s *MyAppService) PostArticleService(article models.Article) (models.Article, error) {
 	newArticle, err := repositories.InsertArticle(s.db, article)
 	if err != nil {
-		err = apperrors.InsertDetaFailed.Wrap(err, "failed to record data")
+		err = apperrors.InsertDataFailed.Wrap(err, "fail to record data")
 		return models.Article{}, err
 	}
 	return newArticle, nil
@@ -66,7 +68,7 @@ func (s *MyAppService) PostNiceService(article models.Article) (models.Article, 
 			err = apperrors.NoTargetData.Wrap(err, "does not exist target article")
 			return models.Article{}, err
 		}
-		err = apperrors.InsertDetaFailed.Wrap(err, "failed to record data")
+		err = apperrors.InsertDataFailed.Wrap(err, "failed to record data")
 		return models.Article{}, err
 	}
 

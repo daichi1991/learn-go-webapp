@@ -6,6 +6,7 @@ import (
 
 	"github.com/daichi1991/learn-go-webapp/models"
 	"github.com/daichi1991/learn-go-webapp/controllers/services"
+	"github.com/daichi1991/learn-go-webapp/apperrors"
 )
 
 type CommentController struct {
@@ -21,12 +22,12 @@ func (c *CommentController) PostCommentHandler(w http.ResponseWriter, req *http.
 	var reqComment models.Comment
 	if err := json.NewDecoder(req.Body).Decode(&reqComment); err != nil {
 		err = apperrors.ReqBodyDecodeFailed.Wrap(err, "bad request body")
-		http.Error(w, "fail to decode json\n", http.StatusBadRequest)
+		apperrors.ErrorHander(w, req, err)
 	}
 
 	comment, err := c.service.PostCommentService(reqComment)
 	if err != nil {
-		http.Error(w, "fail internal exec\n", http.StatusInternalServerError)
+		apperrors.ErrorHander(w, req, err)
 		return
 	}
 	json.NewEncoder(w).Encode(comment)
