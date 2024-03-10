@@ -4,9 +4,11 @@ import (
 	"net/http"
 	"errors"
 	"encoding/json"
+	"log"
+	"github.com/daichi1991/learn-go-webapp/api/middlewares"
 )
 
-func ErrorHander(w http.ResponseWriter, req *http.Request, err error) {
+func ErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
  var appErr *MyAppError
 	if !errors.As(err, &appErr) {
 		appErr = &MyAppError{
@@ -15,6 +17,9 @@ func ErrorHander(w http.ResponseWriter, req *http.Request, err error) {
 			Err: err,
 		}
 	}
+
+	traceID := middlewares.GetTraceID(req.Context())
+	log.Printf("[%d]error: %s\n", traceID, appErr)
 
 	var statusCode int
 
