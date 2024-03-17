@@ -2,14 +2,16 @@ package controllers
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
-	"github.com/daichi1991/learn-go-webapp/models"
-	"github.com/daichi1991/learn-go-webapp/controllers/services"
 	"github.com/daichi1991/learn-go-webapp/apperrors"
+	"github.com/daichi1991/learn-go-webapp/common"
+	"github.com/daichi1991/learn-go-webapp/controllers/services"
+	"github.com/daichi1991/learn-go-webapp/models"
+	"github.com/gorilla/mux"
 )
 
 type ArticleController struct {
@@ -31,6 +33,14 @@ func (c *ArticleController) PostArticleHandler(w http.ResponseWriter, req *http.
 	if err := json.NewDecoder(req.Body).Decode(&reqArticle); err != nil {
 		err = apperrors.ReqBodyDecodeFailed.Wrap(err, "bad request body")
 		apperrors.ErrorHandler(w, req, err)
+		return
+	}
+
+	authedUserName := common.GetUserName(req.Context())
+	if reqArticle.UserName != authedUserName {
+		err := apperrors.NotMatchUser.Wrap(errors.New("does not match reqBody user and idtoken user"), "invalid parameter")
+		apperrors.ErrorHandler(w, req, err)
+		return
 	}
 
 	article, err := c.service.PostArticleService(reqArticle)
@@ -62,7 +72,7 @@ func (c *ArticleController) ArticleListHandler(w http.ResponseWriter, req *http.
 
 	articleList, err := c.service.GetArticleListService(page)
 	if err != nil {
-		http.Error(w, "fail internal exec\n", http.StatusInternalServerError)
+		apperrors.ErrorHandler(w, req, err)
 		return
 	}
 
@@ -73,7 +83,7 @@ func (c *ArticleController) ArticleListHandler(w http.ResponseWriter, req *http.
 func (c *ArticleController) ArticleDetailHandler(w http.ResponseWriter, req *http.Request) {
 	articleID, err := strconv.Atoi(mux.Vars(req)["id"])
 	if err != nil {
-		err = apperrors.BadParam.Wrap(err, "queryparam must be number")
+		err = apperrors.BadParam.Wrap(err, "pathparam must be number")
 		apperrors.ErrorHandler(w, req, err)
 		return
 	}
@@ -91,8 +101,8 @@ func (c *ArticleController) ArticleDetailHandler(w http.ResponseWriter, req *htt
 func (c *ArticleController) PostNiceHandler(w http.ResponseWriter, req *http.Request) {
 	var reqArticle models.Article
 	if err := json.NewDecoder(req.Body).Decode(&reqArticle); err != nil {
-		err = apperrors.ReqBodyDecodeFailed.Wrap(err, "bad request body")
 		apperrors.ErrorHandler(w, req, err)
+		http.Error(w, "fail to decode json\n", http.StatusBadRequest)
 	}
 
 	article, err := c.service.PostNiceService(reqArticle)

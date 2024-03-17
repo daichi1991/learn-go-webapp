@@ -10,12 +10,12 @@ import (
 )
 
 func ErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
- var appErr *MyAppError
+	var appErr *MyAppError
 	if !errors.As(err, &appErr) {
 		appErr = &MyAppError{
 			ErrCode: Unknown,
 			Message: "internal process failed",
-			Err: err,
+			Err:     err,
 		}
 	}
 
@@ -29,10 +29,12 @@ func ErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
 		statusCode = http.StatusNotFound
 	case NoTargetData, ReqBodyDecodeFailed, BadParam:
 		statusCode = http.StatusBadRequest
-	case RequireAuthorizationHeader, Unauthorized:
+	case RequiredAuthorizationHeader, Unauthorizated:
 		statusCode = http.StatusUnauthorized
+	case NotMatchUser:
+		statusCode = http.StatusForbidden
 	default:
-		statusCode = http.StatusInternalServerError	
+		statusCode = http.StatusInternalServerError
 	}
 
 	w.WriteHeader(statusCode)

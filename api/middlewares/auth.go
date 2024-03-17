@@ -7,57 +7,61 @@ import (
 	"strings"
 
 	"github.com/daichi1991/learn-go-webapp/apperrors"
+	"github.com/daichi1991/learn-go-webapp/common"
 	"google.golang.org/api/idtoken"
 )
 
 const (
-	googleClientID = "YOUR"
+	googleClientID = "your google client id"
 )
-
-type userNameKey struct{}
 
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		// ヘッダを抜き出す
 		authorization := req.Header.Get("Authorization")
 
+		// ヘッダの妥当性を検証
 		authHeaders := strings.Split(authorization, " ")
 		if len(authHeaders) != 2 {
-			err := apperrors.RequireAuthorizationHeader.Wrap(errors.New("invalid req header"), "invalid header")
+			err := apperrors.RequiredAuthorizationHeader.Wrap(errors.New("invalid req header"), "invalid header")
 			apperrors.ErrorHandler(w, req, err)
 			return
 		}
 
 		bearer, idToken := authHeaders[0], authHeaders[1]
-
 		if bearer != "Bearer" || idToken == "" {
-			err := apperrors.RequireAuthorizationHeader.Wrap(errors.New("invalid req header"), "invalid header")
+			err := apperrors.RequiredAuthorizationHeader.Wrap(errors.New("invalid req header"), "invalid header")
 			apperrors.ErrorHandler(w, req, err)
 			return
 		}
 
+		// IDトークン検証
 		tokenValidator, err := idtoken.NewValidator(context.Background())
 		if err != nil {
-			err := apperrors.CannotMakeValidator.Wrap(err, "cannot make validator")
+			err = apperrors.CannotMakeValidator.Wrap(err, "internal auth error")
 			apperrors.ErrorHandler(w, req, err)
 			return
 		}
 
 		payload, err := tokenValidator.Validate(context.Background(), idToken, googleClientID)
 		if err != nil {
-			err := apperrors.Unauthorized.Wrap(err, "invalid id token")
+			err = apperrors.Unauthorizated.Wrap(err, "invalid id token")
 			apperrors.ErrorHandler(w, req, err)
 			return
 		}
 
+		// nameフィールドをpayloadから抜き出す
 		name, ok := payload.Claims["name"]
 		if !ok {
-			err := apperrors.Unauthorized.Wrap(err, "invalid id token")
+			err = apperrors.Unauthorizated.Wrap(err, "invalid id token")
 			apperrors.ErrorHandler(w, req, err)
 			return
 		}
 
-		req = SetUserName(req, name.(string))
+		// contextにユーザー名をセット
+		req = common.SetUserName(req, name.(string))
 
+		// 本物のハンドラへ
 		next.ServeHTTP(w, req)
 	})
 }

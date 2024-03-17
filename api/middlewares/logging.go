@@ -1,9 +1,10 @@
 package middlewares
 
 import (
-	"context"
 	"log"
 	"net/http"
+
+	"github.com/daichi1991/learn-go-webapp/common"
 )
 
 type resLoggingWriter struct {
@@ -23,13 +24,14 @@ func (rsw *resLoggingWriter) WriteHeader(code int) {
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		traceID := newTraceID()
+
+		// リクエスト情報をロギング
 		log.Printf("[%d]%s %s\n", traceID, req.RequestURI, req.Method)
 
-		ctx := req.Context()
-		ctx = context.WithValue(ctx, traceIDKey{}, traceID)
+		ctx := common.SetTraceID(req.Context(), traceID)
 		req = req.WithContext(ctx)
 		rlw := NewResLoggingWriter(w)
-		
+
 		next.ServeHTTP(rlw, req)
 
 		log.Printf("[%d]res: %d", traceID, rlw.code)
